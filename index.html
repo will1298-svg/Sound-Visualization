@@ -246,13 +246,13 @@
   <div class="section-label">01 — The Bassoon's Spectral Fingerprint</div>
 
   <div class="callout">
-    A Fourier transform decomposes any periodic sound into a stack of simple sine waves — <strong>harmonics</strong> — each at a whole-number multiple of the fundamental frequency. The bassoon on G2 (98 Hz) has a distinctive profile: the fundamental is moderate, harmonics 2–5 dominate, then the spectrum rolls off gradually. This gives the instrument its dark, reedy warmth.
+    A Fourier transform decomposes any periodic sound into a stack of simple sine waves — <strong>harmonics</strong> — each at a whole-number multiple of the fundamental frequency. The bassoon on G2 (98.1 Hz) has a striking profile: the fundamental and first few harmonics are very weak, with energy concentrated in H4–H6 (around 391–587 Hz). This "missing fundamental" phenomenon is characteristic of the bassoon's dark, hollow tone on low notes.
   </div>
 
   <div class="viz-row">
     <div class="panel">
       <div class="panel-title">
-        <span><span class="dot dot-amber"></span>Target waveform — bassoon C3</span>
+        <span><span class="dot dot-amber"></span>Target waveform — bassoon G2</span>
         <span id="bassoon-period-label" style="color:var(--amber-dim)">one period</span>
       </div>
       <canvas id="waveform-target" height="140"></canvas>
@@ -290,7 +290,7 @@
       <div class="legend-item"><div class="legend-swatch" style="background:var(--amber)"></div>Bassoon target</div>
       <div class="legend-item"><div class="legend-swatch" style="background:var(--teal)"></div>Your harmonics</div>
     </div>
-    <p class="canvas-note">harmonic number (H1 = fundamental at 98 Hz) →</p>
+    <p class="canvas-note">harmonic number (H1 = fundamental at 98.1 Hz) →</p>
   </div>
 
   <div class="section-label">02 — Build the Sound</div>
@@ -316,23 +316,33 @@
 <script>
 // ═══════════════════════════════════════════════════════
 // BASSOON HARMONIC DATA  (normalised 0–1)
-// Based on characteristic spectral profile for G2 on bassoon
+// Based on characteristic spectral profile for C3 on bassoon
 // ═══════════════════════════════════════════════════════
 const TARGET = [
-  0.060118,  // H1  — fundamental, moderate (bassoon fundamental is often recessed)
-  0.12001,  // H2
-  0.196311,  // H3  — typically loudest
-  0.828222,  // H4
-  1.0,  // H5
-  0.807357,  // H6
-  0.062921,  // H7
-  0.121192,  // H8
-  0.151548,  // H9
-  0.070721,  // H10
+  0.060117611,  // H1   98.1 Hz  — fundamental (very recessed on low G)
+  0.12001019,   // H2  196.3 Hz
+  0.196310837,  // H3  293.0 Hz
+  0.828222483,  // H4  391.1 Hz
+  1.0,          // H5  489.3 Hz  — dominant peak
+  0.807357045,  // H6  587.4 Hz
+  0.062921251,  // H7  684.1 Hz
+  0.121191546,  // H8  782.2 Hz
+  0.15154792,   // H9  880.4 Hz
+  0.070720777,  // H10 978.5 Hz
+  0.017424427,  // H11 1076.7 Hz
+  0.054140338,  // H12 1173.3 Hz
+  0.025136055,  // H13 1271.5 Hz
+  0.008002532,  // H14 1369.6 Hz
+  0.002431712,  // H15 1467.8 Hz
+  0.005026463,  // H16 1565.9 Hz
+  0.004974157,  // H17 1662.6 Hz
+  0.012236577,  // H18 1760.7 Hz
+  0.002486897,  // H19 1858.9 Hz
+  0.003625765,  // H20 1957.0 Hz
 ];
 
-const FUNDAMENTAL = 98; // G2 in Hz
-const NUM_HARMONICS = TARGET.length;
+const FUNDAMENTAL = 98.14453125; // G2
+const NUM_HARMONICS = 20;
 
 // User's current slider values
 const userAmps = new Array(NUM_HARMONICS).fill(0);
@@ -447,8 +457,9 @@ function drawFFT(canvas, targetAmps, userAmps) {
   ctx.clearRect(0, 0, W, H);
 
   const n = targetAmps.length;
-  const barW = W / (n * 3 + 1);
-  const gap = barW;
+  const totalSlots = n * 2 + (n + 1) * 0.6; // 2 bars + gaps per group
+  const barW = Math.floor(W / (n * 2 + n * 0.8 + 1));
+  const gap = Math.max(3, Math.floor(barW * 0.4));
   const maxH = H * 0.82;
   const baseline = H - 20 * window.devicePixelRatio;
 
@@ -458,7 +469,8 @@ function drawFFT(canvas, targetAmps, userAmps) {
   ctx.beginPath(); ctx.moveTo(0, baseline); ctx.lineTo(W, baseline); ctx.stroke();
 
   for (let i = 0; i < n; i++) {
-    const groupX = gap + i * (barW * 3 + gap);
+    const groupW = barW * 2 + 2 + gap;
+    const groupX = gap * 0.5 + i * (groupW + gap * 0.4);
 
     // Target bar (amber)
     const th = targetAmps[i] * maxH;
